@@ -3,134 +3,569 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Tutorial - Debug</title>
+    <title>Network Switching Tutorial</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background: #f0f0f0;
         }
-        .error {
-            background: #fee;
-            border: 2px solid #f00;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
-        .success {
-            background: #efe;
-            border: 2px solid #0f0;
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            background: #f9fafb;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 16px;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            background: #f3f4f6;
+        }
+
+        .tab-button.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .tab-content {
+            padding: 30px;
+            min-height: 400px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .card-blue {
+            background: #eef2ff;
+            border: 2px solid #6366f1;
+        }
+
+        .card-green {
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .card-blue h3 { color: #4338ca; }
+        .card-green h3 { color: #047857; }
+
+        .formula-box {
+            background: white;
             padding: 15px;
-            margin: 10px 0;
             border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .card-blue .formula-box { color: #4338ca; }
+        .card-green .formula-box { color: #047857; }
+
+        .info-box {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .result-card {
+            padding: 25px;
+            border-radius: 12px;
+            border: 3px solid;
+            text-align: center;
+        }
+
+        .result-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .version-buttons {
+            margin-bottom: 25px;
+        }
+
+        .version-btn {
+            padding: 12px 24px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .version-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .version-btn:not(.active) {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        pre {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
-    <h1>Diagnostic Check</h1>
-    <div id="status">Checking...</div>
-    <hr>
-    <div id="app"></div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔌 Network Switching Tutorial</h1>
+            <p>Circuit vs Packet Switching Explained</p>
+        </div>
 
-    <!-- React and ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('intro')">Introduction</button>
+            <button class="tab-button" onclick="switchTab('tandem')">Version 1: Tandem</button>
+            <button class="tab-button" onclick="switchTab('star')">Version 2: Star</button>
+            <button class="tab-button" onclick="switchTab('calculator')">Calculator</button>
+        </div>
 
-    <script>
-        // Check if libraries loaded
-        let status = '';
+        <!-- Tab Contents -->
         
-        if (typeof React !== 'undefined') {
-            status += '<div class="success">✓ React loaded successfully</div>';
-        } else {
-            status += '<div class="error">✗ React failed to load</div>';
-        }
-        
-        if (typeof ReactDOM !== 'undefined') {
-            status += '<div class="success">✓ ReactDOM loaded successfully</div>';
-        } else {
-            status += '<div class="error">✗ ReactDOM failed to load</div>';
-        }
-        
-        if (typeof Babel !== 'undefined') {
-            status += '<div class="success">✓ Babel loaded successfully</div>';
-        } else {
-            status += '<div class="error">✗ Babel failed to load</div>';
-        }
-
-        document.getElementById('status').innerHTML = status;
-    </script>
-
-    <script type="text/babel">
-        function TestApp() {
-            const [tab, setTab] = React.useState('test');
+        <!-- Introduction Tab -->
+        <div id="intro" class="tab-content active">
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: #1f2937;">Understanding Network Switching</h2>
             
-            return (
-                <div style={{ background: 'white', padding: '20px', borderRadius: '8px' }}>
-                    <h2>React is Working!</h2>
-                    
-                    <div style={{ marginBottom: '20px' }}>
-                        <button 
-                            onClick={() => setTab('test')}
-                            style={{
-                                padding: '10px 20px',
-                                marginRight: '10px',
-                                background: tab === 'test' ? '#0066cc' : '#ccc',
-                                color: tab === 'test' ? 'white' : 'black',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Test Tab
-                        </button>
-                        <button 
-                            onClick={() => setTab('demo')}
-                            style={{
-                                padding: '10px 20px',
-                                background: tab === 'demo' ? '#0066cc' : '#ccc',
-                                color: tab === 'demo' ? 'white' : 'black',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Demo Tab
-                        </button>
+            <div class="grid-2">
+                <div class="card card-blue">
+                    <h3>⚡ Circuit Switching</h3>
+                    <p style="margin-bottom: 15px; line-height: 1.6;">
+                        Establishes a dedicated path before transmission begins. Like making a phone call - the connection is reserved for the duration.
+                    </p>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong style="color: #16a34a;">✓ Advantages:</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>Guaranteed bandwidth</li>
+                            <li>Predictable performance</li>
+                            <li>Low latency once connected</li>
+                        </ul>
                     </div>
-
-                    <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '5px', minHeight: '100px' }}>
-                        {tab === 'test' && (
-                            <div>
-                                <h3>This is the Test Tab</h3>
-                                <p>If you can see this, tabs are working correctly!</p>
-                            </div>
-                        )}
-                        
-                        {tab === 'demo' && (
-                            <div>
-                                <h3>This is the Demo Tab</h3>
-                                <p>Click between tabs to verify switching works.</p>
-                            </div>
-                        )}
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <strong style="color: #dc2626;">✗ Disadvantages:</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>Setup time overhead</li>
+                            <li>Wasted bandwidth when idle</li>
+                            <li>Blocking when network busy</li>
+                        </ul>
                     </div>
+                    <div class="formula-box">T = U + L/R + Y</div>
+                </div>
 
-                    <div style={{ marginTop: '20px', background: '#efe', padding: '15px', borderRadius: '5px' }}>
-                        <strong>Current tab:</strong> {tab}
+                <div class="card card-green">
+                    <h3>📦 Packet Switching</h3>
+                    <p style="margin-bottom: 15px; line-height: 1.6;">
+                        Breaks data into packets that travel independently. Like sending mail - each packet finds its own way to the destination.
+                    </p>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong style="color: #16a34a;">✓ Advantages:</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>Efficient resource usage</li>
+                            <li>No setup time needed</li>
+                            <li>Better for bursty traffic</li>
+                        </ul>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <strong style="color: #dc2626;">✗ Disadvantages:</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>Header overhead per packet</li>
+                            <li>Routing delays</li>
+                            <li>Possible network congestion</li>
+                        </ul>
+                    </div>
+                    <div class="formula-box">T = NX + (L+NH)/R + Y</div>
+                </div>
+            </div>
+
+            <div style="background: #f9fafb; padding: 20px; border-radius: 12px; margin-top: 30px;">
+                <h3 style="font-size: 1.25rem; margin-bottom: 15px;">📐 Variable Definitions</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div><strong>L</strong> = Message length (bits)</div>
+                    <div><strong>R</strong> = Transmission rate (bits/sec)</div>
+                    <div><strong>Y</strong> = Transfer delay per link (sec)</div>
+                    <div><strong>U</strong> = Circuit setup time (sec)</div>
+                    <div><strong>P</strong> = Packet size with header (bits)</div>
+                    <div><strong>H</strong> = Header size (bits)</div>
+                    <div><strong>X</strong> = Packet routing delay (sec)</div>
+                    <div><strong>N</strong> = Number of packets = ⌈L/(P-H)⌉</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tandem Tab -->
+        <div id="tandem" class="tab-content">
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: #1f2937;">Version 1: Tandem Network</h2>
+            
+            <div style="background: #e0f2fe; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <p style="font-size: 1.1rem; line-height: 1.6;">
+                    A simple point-to-point network: Node A sends a message to Node B through a single direct link.
+                </p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card card-blue">
+                    <h3>⚡ Circuit Switching</h3>
+                    <ol style="line-height: 1.8;">
+                        <li><strong>Setup:</strong> Establish dedicated circuit (time U)</li>
+                        <li><strong>Transmit:</strong> Send entire message at rate R</li>
+                        <li><strong>Propagate:</strong> Signal travels through link (delay Y)</li>
+                    </ol>
+                    <div class="formula-box">T = U + L/R + Y</div>
+                </div>
+
+                <div class="card card-green">
+                    <h3>📦 Packet Switching</h3>
+                    <ol style="line-height: 1.8;">
+                        <li><strong>Fragment:</strong> Break message into N packets</li>
+                        <li><strong>Add Headers:</strong> Attach header H to each packet</li>
+                        <li><strong>Route:</strong> Each packet routed independently (delay X)</li>
+                    </ol>
+                    <div class="formula-box">T = NX + (L+NH)/R + Y</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🔑 Key Insight</h3>
+                <p style="line-height: 1.6; font-size: 1.05rem;">
+                    Packet switching is faster when: <strong style="color: #dc2626;">U &gt; N(X + H/R)</strong>
+                </p>
+                <p style="margin-top: 10px; font-size: 0.95rem; color: #78350f;">
+                    This means the circuit setup overhead must exceed the combined routing and header overhead of all packets.
+                </p>
+            </div>
+        </div>
+
+        <!-- Star Tab -->
+        <div id="star" class="tab-content">
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: #1f2937;">Version 2: Star Network</h2>
+            
+            <div style="background: #fce7f3; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <p style="font-size: 1.1rem; line-height: 1.6;">
+                    A star topology where three sources (A, B, C) send messages to three destinations (D, E, F) through a central hub (Node G).
+                </p>
+            </div>
+
+            <pre style="text-align: center; font-size: 1rem;">    A   B   C
+     \  |  /
+      \ | /
+       \|/
+        G (Hub)
+       /|\
+      / | \
+     /  |  \
+    D   E   F</pre>
+
+            <div class="grid-2">
+                <div class="card card-blue">
+                    <h3>⚡ Circuit Switching</h3>
+                    <p style="margin-bottom: 15px; line-height: 1.6;">
+                        Messages must be transmitted <strong>sequentially</strong> — only one at a time.
+                    </p>
+                    <div class="formula-box" style="font-size: 1.1rem;">T = 3 × (U + L/R + 2Y)</div>
+                    <p style="font-size: 0.85rem; color: #6b7280; margin-top: 8px;">
+                        Note: 2Y because each message crosses two links
+                    </p>
+                </div>
+
+                <div class="card card-green">
+                    <h3>📦 Packet Switching</h3>
+                    <p style="margin-bottom: 15px; line-height: 1.6;">
+                        Packets can be transmitted <strong>concurrently</strong> with queuing at the hub.
+                    </p>
+                    <div class="formula-box" style="font-size: 1rem;">T = (X+P/R+Y) + 3N(X+P/R) + Y</div>
+                    <p style="font-size: 0.85rem; color: #6b7280; margin-top: 8px;">
+                        Includes queuing delays at hub node G
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: #fee2e2; padding: 20px; border-radius: 12px; border: 2px solid #dc2626; margin-top: 25px;">
+                <h3 style="color: #991b1b; margin-bottom: 10px;">⚠️ Congestion Point</h3>
+                <p style="line-height: 1.6;">
+                    Node G is a <strong>bottleneck</strong> where all traffic converges. In packet switching, this creates queuing delays but allows concurrent transmission. In circuit switching, only one message can use the network at a time, causing blocking.
+                </p>
+            </div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: #1f2937;">Interactive Calculator</h2>
+            
+            <div class="version-buttons">
+                <button class="version-btn active" onclick="setVersion(1)">Version 1 (Tandem)</button>
+                <button class="version-btn" onclick="setVersion(2)">Version 2 (Star)</button>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>L (bits)</label>
+                    <input type="number" id="L" value="1000" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>R (bits/sec)</label>
+                    <input type="number" id="R" value="4000" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Y (sec)</label>
+                    <input type="number" id="Y" value="1" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>U (sec)</label>
+                    <input type="number" id="U" value="1" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>P (bits)</label>
+                    <input type="number" id="P" value="125" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>H (bits)</label>
+                    <input type="number" id="H" value="25" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>X (sec)</label>
+                    <input type="number" id="X" value="0.1" step="0.01" oninput="calculate()">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="result-card card-blue">
+                    <h3>⚡ Circuit Switching</h3>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Number of packets:</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #4338ca;" id="n-circuit">10</div>
+                    </div>
+                    <div style="background: #4338ca; color: white; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 5px;">Total Time:</div>
+                        <div class="result-value" id="circuit-result">1.2500</div>
+                        <div style="font-size: 1rem; opacity: 0.9;">seconds</div>
                     </div>
                 </div>
-            );
+
+                <div class="result-card card-green">
+                    <h3>📦 Packet Switching</h3>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 5px;">Number of packets:</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #047857;" id="n-packet">10</div>
+                    </div>
+                    <div style="background: #047857; color: white; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 5px;">Total Time:</div>
+                        <div class="result-value" id="packet-result">1.5000</div>
+                        <div style="font-size: 1rem; opacity: 0.9;">seconds</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="winner" style="margin-top: 25px; padding: 25px; border-radius: 12px; text-align: center;"></div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>💡 Key Insights</h3>
+                <ul>
+                    <li>Circuit switching has <strong>fixed overhead</strong> (setup time U)</li>
+                    <li>Packet switching overhead <strong>scales with N</strong> (routing + headers)</li>
+                    <li>For <strong>short messages</strong>, packet switching is often faster</li>
+                    <li>For <strong>long transfers</strong> with high setup cost, circuit may win</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentVersion = 1;
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Mark button as active
+            event.target.classList.add('active');
         }
 
-        try {
-            const root = ReactDOM.createRoot(document.getElementById('app'));
-            root.render(<TestApp />);
-            console.log('React app rendered successfully');
-        } catch (error) {
-            console.error('Error rendering React app:', error);
-            document.getElementById('app').innerHTML = '<div class="error"><strong>Error:</strong> ' + error.message + '</div>';
+        function setVersion(version) {
+            currentVersion = version;
+            
+            const buttons = document.querySelectorAll('.version-btn');
+            buttons.forEach((btn, index) => {
+                if (index + 1 === version) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            calculate();
         }
+
+        function calculate() {
+            const L = parseFloat(document.getElementById('L').value) || 0;
+            const R = parseFloat(document.getElementById('R').value) || 1;
+            const Y = parseFloat(document.getElementById('Y').value) || 0;
+            const U = parseFloat(document.getElementById('U').value) || 0;
+            const P = parseFloat(document.getElementById('P').value) || 1;
+            const H = parseFloat(document.getElementById('H').value) || 0;
+            const X = parseFloat(document.getElementById('X').value) || 0;
+
+            const N = Math.ceil(L / (P - H));
+            
+            let circuitTime, packetTime;
+            
+            if (currentVersion === 1) {
+                circuitTime = U + (L / R) + Y;
+                packetTime = N * X + (L + N * H) / R + Y;
+            } else {
+                circuitTime = 3 * (U + (L / R) + 2 * Y);
+                packetTime = (X + P / R + Y) + 3 * N * (X + P / R) + Y;
+            }
+
+            document.getElementById('n-circuit').textContent = 'N = ' + N;
+            document.getElementById('n-packet').textContent = 'N = ' + N;
+            document.getElementById('circuit-result').textContent = circuitTime.toFixed(4);
+            document.getElementById('packet-result').textContent = packetTime.toFixed(4);
+
+            const winner = document.getElementById('winner');
+            const diff = Math.abs(circuitTime - packetTime).toFixed(4);
+            
+            if (circuitTime < packetTime) {
+                winner.style.background = '#eef2ff';
+                winner.style.border = '3px solid #6366f1';
+                winner.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🏆⚡ Circuit Switching Wins!</div>
+                    <div style="font-size: 1.1rem; color: #374151;">Time difference: <strong>${diff} seconds</strong></div>
+                `;
+            } else {
+                winner.style.background = '#f0fdf4';
+                winner.style.border = '3px solid #10b981';
+                winner.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🏆📦 Packet Switching Wins!</div>
+                    <div style="font-size: 1.1rem; color: #374151;">Time difference: <strong>${diff} seconds</strong></div>
+                `;
+            }
+        }
+
+        // Initialize calculator
+        calculate();
     </script>
 </body>
 </html>
