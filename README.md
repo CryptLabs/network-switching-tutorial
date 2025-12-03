@@ -2,7 +2,7 @@
 
 Interactive web application for learning about network switching mechanisms - Circuit Switching vs Packet Switching.
 
-**🚀 Live Demo:** [https://CryptLabs.github.io/network-switching-tutorial/](https://CryptLabs.github.io/network-switching-tutorial/)
+**🚀 Live Tutorial:** [https://CryptLabs.github.io/network-switching-tutorial/](https://CryptLabs.github.io/network-switching-tutorial/)
 
 ---
 
