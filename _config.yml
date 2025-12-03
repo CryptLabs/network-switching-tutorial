@@ -1,0 +1,29 @@
+# Jekyll configuration for GitHub Pages
+# This file is optional since we're using a pure HTML/React app
+
+# Site settings
+title: Network Switching Tutorial
+description: Interactive tutorial for learning circuit switching vs packet switching
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site
+
+# GitHub metadata
+github_username: CryptLabs
+repository: CryptLabs/network-switching-tutorial
+
+# Build settings
+markdown: kramdown
+theme: minima
+
+# Exclude these files from build
+exclude:
+  - README.md
+  - LICENSE
+  - GITHUB_PAGES_GUIDE.md
+  - .gitignore
+
+# GitHub Pages specific settings
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
