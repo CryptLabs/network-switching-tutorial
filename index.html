@@ -1,545 +1,1317 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Interactive tutorial on network switching - Compare circuit switching vs packet switching with real-time calculations">
-    <meta name="keywords" content="network switching, circuit switching, packet switching, networking tutorial, computer networks">
-    <meta name="author" content="Networks Course">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Interactive tutorial on network switching - Compare circuit switching vs packet switching with real-time calculations"
+    />
+    <meta
+      name="keywords"
+      content="network switching, circuit switching, packet switching, networking tutorial, computer networks"
+    />
+    <meta name="author" content="Networks Course" />
+
     <title>Network Switching Tutorial - Circuit vs Packet Switching</title>
-    
+
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>">
-    
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔌</text></svg>"
+    />
+
     <!-- React and ReactDOM from CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+
     <!-- Babel Standalone for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
-            min-height: 100vh;
-        }
-        
-        #root {
-            width: 100%;
-            min-height: 100vh;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        /* Loading spinner */
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-size: 1.5rem;
-            color: #4f46e5;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+        min-height: 100vh;
+      }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+      #root {
+        width: 100%;
+        min-height: 100vh;
+      }
 
-        .spinner {
-            border: 4px solid #e0e7ff;
-            border-top: 4px solid #4f46e5;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin-right: 1rem;
+      /* Loading spinner */
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-size: 1.5rem;
+        color: #4f46e5;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
+      }
+
+      .spinner {
+        border: 4px solid #e0e7ff;
+        border-top: 4px solid #4f46e5;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-right: 1rem;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="root">
-        <div class="loading">
-            <div class="spinner"></div>
-            <span>Loading Tutorial...</span>
-        </div>
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading Tutorial...</span>
+      </div>
     </div>
 
     <script type="text/babel">
-        const { useState } = React;
+      const { useState } = React;
 
-        const NetworkSwitchingTutorial = () => {
-          const [activeTab, setActiveTab] = useState('intro');
-          const [version, setVersion] = useState(1);
-          
-          const [params, setParams] = useState({
-            L: 1000,   // Message length (bits)
-            R: 4000,   // Transmission rate (bits/sec)
-            Y: 1,      // Transfer delay per link (sec)
-            U: 1,      // Setup time for circuit switch (sec)
-            P: 125,    // Packet size (bits) - includes header
-            H: 25,     // Header size (bits)
-            X: 0.1     // Packet routing delay (sec)
-          });
+      const NetworkSwitchingTutorial = () => {
+        const [activeTab, setActiveTab] = useState("intro");
+        const [version, setVersion] = useState(1);
 
-          // Calculations
-          const calcCircuitSwitch = (L, R, Y, U) => U + (L / R) + Y;
-          const calcPacketSwitch = (L, R, Y, P, H, X) => {
-            const N = Math.ceil(L / (P - H));
-            return N * X + (L + N * H) / R + Y;
-          };
-          const calcCircuitSwitchV2 = (L, R, Y, U) => 3 * (U + (L / R) + 2 * Y);
-          const calcPacketSwitchV2 = (L, R, Y, P, H, X) => {
-            const N = Math.ceil(L / (P - H));
-            return (X + P / R + Y) + 3 * N * (X + P / R) + Y;
-          };
+        const [params, setParams] = useState({
+          L: 1000, // Message length (bits)
+          R: 4000, // Transmission rate (bits/sec)
+          Y: 1, // Transfer delay per link (sec)
+          U: 1, // Setup time for circuit switch (sec)
+          P: 125, // Packet size (bits) - includes header
+          H: 25, // Header size (bits)
+          X: 0.1, // Packet routing delay (sec)
+        });
 
-          const N = Math.ceil(params.L / (params.P - params.H));
-          const circuitTime = calcCircuitSwitch(params.L, params.R, params.Y, params.U);
-          const packetTime = calcPacketSwitch(params.L, params.R, params.Y, params.P, params.H, params.X);
-          const circuitTimeV2 = calcCircuitSwitchV2(params.L, params.R, params.Y, params.U);
-          const packetTimeV2 = calcPacketSwitchV2(params.L, params.R, params.Y, params.P, params.H, params.X);
+        // Calculations
+        const calcCircuitSwitch = (L, R, Y, U) => U + L / R + Y;
+        const calcPacketSwitch = (L, R, Y, P, H, X) => {
+          const N = Math.ceil(L / (P - H));
+          return N * X + (L + N * H) / R + Y;
+        };
+        const calcCircuitSwitchV2 = (L, R, Y, U) => 3 * (U + L / R + 2 * Y);
+        const calcPacketSwitchV2 = (L, R, Y, P, H, X) => {
+          const N = Math.ceil(L / (P - H));
+          return X + P / R + Y + 3 * N * (X + P / R) + Y;
+        };
 
-          const Icon = ({ icon: IconComponent, ...props }) => {
-            React.useEffect(() => {
-              if (window.lucide) {
-                window.lucide.createIcons();
-              }
-            }, []);
-            return <i data-lucide={IconComponent} {...props}></i>;
-          };
+        const N = Math.ceil(params.L / (params.P - params.H));
+        const circuitTime = calcCircuitSwitch(
+          params.L,
+          params.R,
+          params.Y,
+          params.U,
+        );
+        const packetTime = calcPacketSwitch(
+          params.L,
+          params.R,
+          params.Y,
+          params.P,
+          params.H,
+          params.X,
+        );
+        const circuitTimeV2 = calcCircuitSwitchV2(
+          params.L,
+          params.R,
+          params.Y,
+          params.U,
+        );
+        const packetTimeV2 = calcPacketSwitchV2(
+          params.L,
+          params.R,
+          params.Y,
+          params.P,
+          params.H,
+          params.X,
+        );
 
-          return (
-            <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #dbeafe, #e0e7ff)', padding: '1rem' }}>
-              <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                
-                {/* Header */}
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '2rem', marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                    <Icon icon="network" style={{ width: '48px', height: '48px', color: '#4f46e5', flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: '200px' }}>
-                      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                        Network Switching Tutorial
-                      </h1>
-                      <p style={{ color: '#6b7280', marginTop: '0.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>
-                        Understanding Circuit Switching vs Packet Switching
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        const Icon = ({ icon: IconComponent, ...props }) => {
+          React.useEffect(() => {
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          }, []);
+          return <i data-lucide={IconComponent} {...props}></i>;
+        };
 
-                {/* Navigation Tabs */}
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '2rem', padding: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {[
-                    { id: 'intro', label: 'Introduction' },
-                    { id: 'tandem', label: 'Version 1: Tandem' },
-                    { id: 'star', label: 'Version 2: Star' },
-                    { id: 'calculator', label: 'Calculator' }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+        return (
+          <div
+            style={{
+              minHeight: "100vh",
+              background: "linear-gradient(to bottom right, #dbeafe, #e0e7ff)",
+              padding: "1rem",
+            }}
+          >
+            <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+              {/* Header */}
+              <div
+                style={{
+                  background: "white",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                  padding: "2rem",
+                  marginBottom: "2rem",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    marginBottom: "1rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Icon
+                    icon="network"
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      color: "#4f46e5",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: "200px" }}>
+                    <h1
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.75rem 1.5rem',
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        background: activeTab === tab.id ? '#4f46e5' : '#f3f4f6',
-                        color: activeTab === tab.id ? 'white' : '#374151',
-                        boxShadow: activeTab === tab.id ? '0 2px 4px rgba(79, 70, 229, 0.3)' : 'none',
-                        fontSize: 'clamp(0.875rem, 2vw, 1rem)'
+                        fontSize: "clamp(1.5rem, 5vw, 2.5rem)",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                        margin: 0,
                       }}
                     >
-                      {tab.label}
-                    </button>
-                  ))}
+                      Network Switching Tutorial
+                    </h1>
+                    <p
+                      style={{
+                        color: "#6b7280",
+                        marginTop: "0.5rem",
+                        fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                      }}
+                    >
+                      Understanding Circuit Switching vs Packet Switching
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                {/* Content Area */}
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: 'clamp(1rem, 3vw, 2rem)' }}>
-                  
-                  {/* Introduction Tab */}
-                  {activeTab === 'intro' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: '#1f2937', marginBottom: '1.5rem' }}>
-                        Key Concepts
-                      </h2>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                        {/* Circuit Switching */}
-                        <div style={{ border: '2px solid #c7d2fe', borderRadius: '12px', padding: '1.5rem', background: '#eef2ff' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                            <Icon icon="zap" style={{ width: '32px', height: '32px', color: '#4f46e5' }} />
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3730a3' }}>
-                              Circuit Switching
-                            </h3>
-                          </div>
-                          <p style={{ color: '#374151', marginBottom: '1rem' }}>
-                            Establishes a dedicated communication path between nodes before data transmission begins.
-                          </p>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                              <p style={{ fontWeight: '600', color: '#3730a3', marginBottom: '0.25rem' }}>✓ Advantages:</p>
-                              <ul style={{ color: '#374151', marginLeft: '1.5rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <li>Guaranteed bandwidth</li>
-                                <li>Predictable performance</li>
-                                <li>Low latency once connected</li>
-                              </ul>
-                            </div>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                              <p style={{ fontWeight: '600', color: '#991b1b', marginBottom: '0.25rem' }}>✗ Disadvantages:</p>
-                              <ul style={{ color: '#374151', marginLeft: '1.5rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <li>Setup time overhead</li>
-                                <li>Resource waste if idle</li>
-                                <li>Blocking when busy</li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div style={{ marginTop: '1rem', background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                            <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#3730a3', margin: 0 }}>
-                              T = U + L/R + Y
-                            </p>
-                            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                              Time = Setup + Transmission + Propagation
-                            </p>
-                          </div>
-                        </div>
+              {/* Navigation Tabs */}
+              <div
+                style={{
+                  background: "white",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                  marginBottom: "2rem",
+                  padding: "0.5rem",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                }}
+              >
+                {[
+                  { id: "intro", label: "Introduction" },
+                  { id: "tandem", label: "Version 1: Tandem" },
+                  { id: "star", label: "Version 2: Star" },
+                  { id: "calculator", label: "Calculator" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      padding: "0.75rem 1.5rem",
+                      borderRadius: "8px",
+                      fontWeight: "600",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      background: activeTab === tab.id ? "#4f46e5" : "#f3f4f6",
+                      color: activeTab === tab.id ? "white" : "#374151",
+                      boxShadow:
+                        activeTab === tab.id
+                          ? "0 2px 4px rgba(79, 70, 229, 0.3)"
+                          : "none",
+                      fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-                        {/* Packet Switching */}
-                        <div style={{ border: '2px solid #bbf7d0', borderRadius: '12px', padding: '1.5rem', background: '#f0fdf4' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                            <Icon icon="box" style={{ width: '32px', height: '32px', color: '#16a34a' }} />
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#15803d' }}>
-                              Packet Switching
-                            </h3>
-                          </div>
-                          <p style={{ color: '#374151', marginBottom: '1rem' }}>
-                            Breaks data into packets that are routed independently through the network.
-                          </p>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                              <p style={{ fontWeight: '600', color: '#15803d', marginBottom: '0.25rem' }}>✓ Advantages:</p>
-                              <ul style={{ color: '#374151', marginLeft: '1.5rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <li>Efficient resource usage</li>
-                                <li>No setup time</li>
-                                <li>Better for bursty traffic</li>
-                              </ul>
-                            </div>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                              <p style={{ fontWeight: '600', color: '#991b1b', marginBottom: '0.25rem' }}>✗ Disadvantages:</p>
-                              <ul style={{ color: '#374151', marginLeft: '1.5rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <li>Header overhead</li>
-                                <li>Routing delays</li>
-                                <li>Possible congestion</li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div style={{ marginTop: '1rem', background: 'white', borderRadius: '8px', padding: '0.75rem' }}>
-                            <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#15803d', margin: 0 }}>
-                              T = NX + (L+NH)/R + Y
-                            </p>
-                            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                              Time = Routing + Transmission + Propagation
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+              {/* Content Area */}
+              <div
+                style={{
+                  background: "white",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                  padding: "clamp(1rem, 3vw, 2rem)",
+                }}
+              >
+                {/* Introduction Tab */}
+                {activeTab === "intro" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                        marginBottom: "1.5rem",
+                      }}
+                    >
+                      Key Concepts
+                    </h2>
 
-                      {/* Variable Definitions */}
-                      <div style={{ marginTop: '2rem', background: 'linear-gradient(to right, #f9fafb, #f3f4f6)', borderRadius: '12px', padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '1rem' }}>
-                          Variable Definitions
-                        </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                          {[
-                            { var: 'L', desc: 'Message length (bits)' },
-                            { var: 'R', desc: 'Transmission rate (bits/sec)' },
-                            { var: 'Y', desc: 'Transfer delay per link (sec)' },
-                            { var: 'U', desc: 'Circuit setup time (sec)' },
-                            { var: 'P', desc: 'Packet size including header (bits)' },
-                            { var: 'H', desc: 'Header size (bits)' },
-                            { var: 'X', desc: 'Packet routing delay (sec)' },
-                            { var: 'N', desc: 'Number of packets = ⌈L/(P-H)⌉' }
-                          ].map(item => (
-                            <div key={item.var} style={{ color: '#374151', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>
-                              <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{item.var}</span> = {item.desc}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tandem Network Tab */}
-                  {activeTab === 'tandem' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: '#1f2937' }}>
-                        Version 1: Tandem Network
-                      </h2>
-                      <p style={{ fontSize: '1.125rem', color: '#374151' }}>
-                        A simple two-node network where a message travels from Node A to Node B through a single link.
-                      </p>
-                      
-                      <div style={{ background: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '12px', padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#92400e', marginBottom: '0.75rem' }}>
-                          🔑 Key Insight
-                        </h3>
-                        <p style={{ color: '#78350f', margin: 0, lineHeight: 1.6 }}>
-                          In a tandem network, packet switching will be faster when: <strong>U &gt; N(X + H/R)</strong>
-                        </p>
-                        <p style={{ color: '#78350f', marginTop: '0.75rem', fontSize: '0.875rem' }}>
-                          The setup overhead must be greater than the combined routing and header overhead.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Star Network Tab */}
-                  {activeTab === 'star' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: '#1f2937' }}>
-                        Version 2: Star Network
-                      </h2>
-                      <p style={{ fontSize: '1.125rem', color: '#374151' }}>
-                        A star topology with a central hub (Node G) creating a point of congestion. Three sources (A, B, C) send messages to three destinations (D, E, F).
-                      </p>
-                      
-                      <div style={{ background: '#fee2e2', border: '2px solid #dc2626', borderRadius: '12px', padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#991b1b', marginBottom: '0.75rem' }}>
-                          ⚠️ Congestion Point
-                        </h3>
-                        <p style={{ color: '#7f1d1d', margin: 0, lineHeight: 1.6 }}>
-                          Node G is a <strong>bottleneck</strong> where all traffic converges. In packet switching, this creates queuing delays but allows concurrent transmission. In circuit switching, only one message can use the network at a time, causing blocking.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Calculator Tab */}
-                  {activeTab === 'calculator' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: '#1f2937', marginBottom: '1.5rem' }}>
-                        Transmission Time Calculator
-                      </h2>
-
-                      {/* Version Selector */}
-                      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => setVersion(1)}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(300px, 1fr))",
+                        gap: "1.5rem",
+                      }}
+                    >
+                      {/* Circuit Switching */}
+                      <div
+                        style={{
+                          border: "2px solid #c7d2fe",
+                          borderRadius: "12px",
+                          padding: "1.5rem",
+                          background: "#eef2ff",
+                        }}
+                      >
+                        <div
                           style={{
-                            padding: '0.75rem 1.5rem',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: version === 1 ? '#4f46e5' : '#e5e7eb',
-                            color: version === 1 ? 'white' : '#374151',
-                            boxShadow: version === 1 ? '0 2px 4px rgba(79, 70, 229, 0.3)' : 'none',
-                            fontSize: 'clamp(0.875rem, 2vw, 1rem)'
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.75rem",
+                            marginBottom: "1rem",
                           }}
                         >
-                          Version 1 (Tandem)
-                        </button>
-                        <button
-                          onClick={() => setVersion(2)}
+                          <Icon
+                            icon="zap"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              color: "#4f46e5",
+                            }}
+                          />
+                          <h3
+                            style={{
+                              fontSize: "1.5rem",
+                              fontWeight: "bold",
+                              color: "#3730a3",
+                            }}
+                          >
+                            Circuit Switching
+                          </h3>
+                        </div>
+                        <p style={{ color: "#374151", marginBottom: "1rem" }}>
+                          Establishes a dedicated communication path between
+                          nodes before data transmission begins.
+                        </p>
+                        <div
                           style={{
-                            padding: '0.75rem 1.5rem',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: version === 2 ? '#a855f7' : '#e5e7eb',
-                            color: version === 2 ? 'white' : '#374151',
-                            boxShadow: version === 2 ? '0 2px 4px rgba(168, 85, 247, 0.3)' : 'none',
-                            fontSize: 'clamp(0.875rem, 2vw, 1rem)'
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.75rem",
                           }}
                         >
-                          Version 2 (Star)
-                        </button>
-                      </div>
-
-                      {/* Input Parameters */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', background: '#f9fafb', borderRadius: '12px', padding: '1.5rem' }}>
-                        {[
-                          { key: 'L', label: 'Message Length L (bits)' },
-                          { key: 'R', label: 'Transmission Rate R (bits/sec)' },
-                          { key: 'Y', label: 'Transfer Delay Y (sec)', step: 0.1 },
-                          { key: 'U', label: 'Setup Time U (sec)', step: 0.1 },
-                          { key: 'P', label: 'Packet Size P (bits)' },
-                          { key: 'H', label: 'Header Size H (bits)' },
-                          { key: 'X', label: 'Routing Delay X (sec)', step: 0.01 }
-                        ].map(param => (
-                          <div key={param.key}>
-                            <label style={{ display: 'block', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
-                              {param.label}
-                            </label>
-                            <input
-                              type="number"
-                              step={param.step || 1}
-                              value={params[param.key]}
-                              onChange={(e) => setParams({...params, [param.key]: Number(e.target.value)})}
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "0.75rem",
+                            }}
+                          >
+                            <p
                               style={{
-                                width: '100%',
-                                padding: '0.5rem 1rem',
-                                border: '2px solid #d1d5db',
-                                borderRadius: '8px',
-                                fontSize: 'clamp(0.875rem, 2vw, 1rem)',
-                                outline: 'none',
-                                transition: 'border-color 0.2s'
+                                fontWeight: "600",
+                                color: "#3730a3",
+                                marginBottom: "0.25rem",
                               }}
-                              onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                            />
+                            >
+                              ✓ Advantages:
+                            </p>
+                            <ul
+                              style={{
+                                color: "#374151",
+                                marginLeft: "1.5rem",
+                                marginTop: "0.25rem",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              <li>Guaranteed bandwidth</li>
+                              <li>Predictable performance</li>
+                              <li>Low latency once connected</li>
+                            </ul>
+                          </div>
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "0.75rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontWeight: "600",
+                                color: "#991b1b",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              ✗ Disadvantages:
+                            </p>
+                            <ul
+                              style={{
+                                color: "#374151",
+                                marginLeft: "1.5rem",
+                                marginTop: "0.25rem",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              <li>Setup time overhead</li>
+                              <li>Resource waste if idle</li>
+                              <li>Blocking when busy</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            marginTop: "1rem",
+                            background: "white",
+                            borderRadius: "8px",
+                            padding: "0.75rem",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                              color: "#3730a3",
+                              margin: 0,
+                            }}
+                          >
+                            T = U + L/R + Y
+                          </p>
+                          <p
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#6b7280",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            Time = Setup + Transmission + Propagation
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Packet Switching */}
+                      <div
+                        style={{
+                          border: "2px solid #bbf7d0",
+                          borderRadius: "12px",
+                          padding: "1.5rem",
+                          background: "#f0fdf4",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.75rem",
+                            marginBottom: "1rem",
+                          }}
+                        >
+                          <Icon
+                            icon="box"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              color: "#16a34a",
+                            }}
+                          />
+                          <h3
+                            style={{
+                              fontSize: "1.5rem",
+                              fontWeight: "bold",
+                              color: "#15803d",
+                            }}
+                          >
+                            Packet Switching
+                          </h3>
+                        </div>
+                        <p style={{ color: "#374151", marginBottom: "1rem" }}>
+                          Breaks data into packets that are routed independently
+                          through the network.
+                        </p>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.75rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "0.75rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontWeight: "600",
+                                color: "#15803d",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              ✓ Advantages:
+                            </p>
+                            <ul
+                              style={{
+                                color: "#374151",
+                                marginLeft: "1.5rem",
+                                marginTop: "0.25rem",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              <li>Efficient resource usage</li>
+                              <li>No setup time</li>
+                              <li>Better for bursty traffic</li>
+                            </ul>
+                          </div>
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "0.75rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontWeight: "600",
+                                color: "#991b1b",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              ✗ Disadvantages:
+                            </p>
+                            <ul
+                              style={{
+                                color: "#374151",
+                                marginLeft: "1.5rem",
+                                marginTop: "0.25rem",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              <li>Header overhead</li>
+                              <li>Routing delays</li>
+                              <li>Possible congestion</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            marginTop: "1rem",
+                            background: "white",
+                            borderRadius: "8px",
+                            padding: "0.75rem",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                              color: "#15803d",
+                              margin: 0,
+                            }}
+                          >
+                            T = NX + (L+NH)/R + Y
+                          </p>
+                          <p
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#6b7280",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            Time = Routing + Transmission + Propagation
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Variable Definitions */}
+                    <div
+                      style={{
+                        marginTop: "2rem",
+                        background:
+                          "linear-gradient(to right, #f9fafb, #f3f4f6)",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: "bold",
+                          color: "#1f2937",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        Variable Definitions
+                      </h3>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(200px, 1fr))",
+                          gap: "1rem",
+                        }}
+                      >
+                        {[
+                          { var: "L", desc: "Message length (bits)" },
+                          { var: "R", desc: "Transmission rate (bits/sec)" },
+                          { var: "Y", desc: "Transfer delay per link (sec)" },
+                          { var: "U", desc: "Circuit setup time (sec)" },
+                          {
+                            var: "P",
+                            desc: "Packet size including header (bits)",
+                          },
+                          { var: "H", desc: "Header size (bits)" },
+                          { var: "X", desc: "Packet routing delay (sec)" },
+                          { var: "N", desc: "Number of packets = ⌈L/(P-H)⌉" },
+                        ].map((item) => (
+                          <div
+                            key={item.var}
+                            style={{
+                              color: "#374151",
+                              fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: "monospace",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {item.var}
+                            </span>{" "}
+                            = {item.desc}
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Calculations Display */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
-                        {/* Circuit Switching Result */}
-                        <div style={{ border: '2px solid #c7d2fe', borderRadius: '12px', padding: '1.5rem', background: '#eef2ff' }}>
-                          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3730a3', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Icon icon="zap" style={{ width: '24px', height: '24px' }} />
-                            Circuit Switching
-                          </h3>
-                          
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>Formula:</p>
-                              <p style={{ fontFamily: 'monospace', fontSize: 'clamp(1rem, 2vw, 1.125rem)', color: '#3730a3', margin: 0 }}>
-                                T = U + L/R + {version === 2 ? '2Y' : 'Y'}
-                              </p>
-                            </div>
+                {/* Tandem Network Tab */}
+                {activeTab === "tandem" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                      }}
+                    >
+                      Version 1: Tandem Network
+                    </h2>
+                    <p style={{ fontSize: "1.125rem", color: "#374151" }}>
+                      A simple two-node network where a message travels from
+                      Node A to Node B through a single link.
+                    </p>
 
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>Calculation:</p>
-                              <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#374151', margin: 0, wordBreak: 'break-all' }}>
-                                T = {params.U} + {params.L}/{params.R} + {version === 2 ? `2×${params.Y}` : params.Y}
-                              </p>
-                              <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#374151', margin: 0, wordBreak: 'break-all' }}>
-                                T = {params.U} + {(params.L / params.R).toFixed(4)} + {version === 2 ? (2 * params.Y) : params.Y}
-                              </p>
-                            </div>
+                    <div
+                      style={{
+                        background: "#fef3c7",
+                        border: "2px solid #fbbf24",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: "bold",
+                          color: "#92400e",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        🔑 Key Insight
+                      </h3>
+                      <p
+                        style={{ color: "#78350f", margin: 0, lineHeight: 1.6 }}
+                      >
+                        In a tandem network, packet switching will be faster
+                        when: <strong>U &gt; N(X + H/R)</strong>
+                      </p>
+                      <p
+                        style={{
+                          color: "#78350f",
+                          marginTop: "0.75rem",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        The setup overhead must be greater than the combined
+                        routing and header overhead.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                            <div style={{ background: '#3730a3', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#c7d2fe', marginBottom: '0.25rem' }}>Total Time:</p>
-                              <p style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: 'white', margin: 0 }}>
-                                {version === 1 ? circuitTime.toFixed(4) : circuitTimeV2.toFixed(4)} sec
-                              </p>
-                            </div>
-                          </div>
+                {/* Star Network Tab */}
+                {activeTab === "star" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                      }}
+                    >
+                      Version 2: Star Network
+                    </h2>
+                    <p style={{ fontSize: "1.125rem", color: "#374151" }}>
+                      A star topology with a central hub (Node G) creating a
+                      point of congestion. Three sources (A, B, C) send messages
+                      to three destinations (D, E, F).
+                    </p>
+
+                    <div
+                      style={{
+                        background: "#fee2e2",
+                        border: "2px solid #dc2626",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: "bold",
+                          color: "#991b1b",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        ⚠️ Congestion Point
+                      </h3>
+                      <p
+                        style={{ color: "#7f1d1d", margin: 0, lineHeight: 1.6 }}
+                      >
+                        Node G is a <strong>bottleneck</strong> where all
+                        traffic converges. In packet switching, this creates
+                        queuing delays but allows concurrent transmission. In
+                        circuit switching, only one message can use the network
+                        at a time, causing blocking.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Calculator Tab */}
+                {activeTab === "calculator" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                        fontWeight: "bold",
+                        color: "#1f2937",
+                        marginBottom: "1.5rem",
+                      }}
+                    >
+                      Transmission Time Calculator
+                    </h2>
+
+                    {/* Version Selector */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "1rem",
+                        marginBottom: "1.5rem",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <button
+                        onClick={() => setVersion(1)}
+                        style={{
+                          padding: "0.75rem 1.5rem",
+                          borderRadius: "8px",
+                          fontWeight: "600",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          background: version === 1 ? "#4f46e5" : "#e5e7eb",
+                          color: version === 1 ? "white" : "#374151",
+                          boxShadow:
+                            version === 1
+                              ? "0 2px 4px rgba(79, 70, 229, 0.3)"
+                              : "none",
+                          fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                        }}
+                      >
+                        Version 1 (Tandem)
+                      </button>
+                      <button
+                        onClick={() => setVersion(2)}
+                        style={{
+                          padding: "0.75rem 1.5rem",
+                          borderRadius: "8px",
+                          fontWeight: "600",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          background: version === 2 ? "#a855f7" : "#e5e7eb",
+                          color: version === 2 ? "white" : "#374151",
+                          boxShadow:
+                            version === 2
+                              ? "0 2px 4px rgba(168, 85, 247, 0.3)"
+                              : "none",
+                          fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                        }}
+                      >
+                        Version 2 (Star)
+                      </button>
+                    </div>
+
+                    {/* Input Parameters */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(150px, 1fr))",
+                        gap: "1rem",
+                        background: "#f9fafb",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                      }}
+                    >
+                      {[
+                        { key: "L", label: "Message Length L (bits)" },
+                        { key: "R", label: "Transmission Rate R (bits/sec)" },
+                        {
+                          key: "Y",
+                          label: "Transfer Delay Y (sec)",
+                          step: 0.1,
+                        },
+                        { key: "U", label: "Setup Time U (sec)", step: 0.1 },
+                        { key: "P", label: "Packet Size P (bits)" },
+                        { key: "H", label: "Header Size H (bits)" },
+                        {
+                          key: "X",
+                          label: "Routing Delay X (sec)",
+                          step: 0.01,
+                        },
+                      ].map((param) => (
+                        <div key={param.key}>
+                          <label
+                            style={{
+                              display: "block",
+                              fontSize: "clamp(0.75rem, 1.5vw, 0.875rem)",
+                              fontWeight: "600",
+                              color: "#374151",
+                              marginBottom: "0.5rem",
+                            }}
+                          >
+                            {param.label}
+                          </label>
+                          <input
+                            type="number"
+                            step={param.step || 1}
+                            value={params[param.key]}
+                            onChange={(e) =>
+                              setParams({
+                                ...params,
+                                [param.key]: Number(e.target.value),
+                              })
+                            }
+                            style={{
+                              width: "100%",
+                              padding: "0.5rem 1rem",
+                              border: "2px solid #d1d5db",
+                              borderRadius: "8px",
+                              fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                              outline: "none",
+                              transition: "border-color 0.2s",
+                            }}
+                            onFocus={(e) =>
+                              (e.target.style.borderColor = "#4f46e5")
+                            }
+                            onBlur={(e) =>
+                              (e.target.style.borderColor = "#d1d5db")
+                            }
+                          />
                         </div>
+                      ))}
+                    </div>
 
-                        {/* Packet Switching Result */}
-                        <div style={{ border: '2px solid #bbf7d0', borderRadius: '12px', padding: '1.5rem', background: '#f0fdf4' }}>
-                          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#15803d', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Icon icon="box" style={{ width: '24px', height: '24px' }} />
-                            Packet Switching
-                          </h3>
-                          
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>Number of packets:</p>
-                              <p style={{ fontFamily: 'monospace', fontSize: 'clamp(1rem, 2vw, 1.125rem)', color: '#15803d', margin: 0 }}>
-                                N = ⌈{params.L}/({params.P}-{params.H})⌉ = {N}
-                              </p>
-                            </div>
+                    {/* Calculations Display */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(280px, 1fr))",
+                        gap: "1.5rem",
+                        marginTop: "2rem",
+                      }}
+                    >
+                      {/* Circuit Switching Result */}
+                      <div
+                        style={{
+                          border: "2px solid #c7d2fe",
+                          borderRadius: "12px",
+                          padding: "1.5rem",
+                          background: "#eef2ff",
+                        }}
+                      >
+                        <h3
+                          style={{
+                            fontSize: "1.5rem",
+                            fontWeight: "bold",
+                            color: "#3730a3",
+                            marginBottom: "1rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <Icon
+                            icon="zap"
+                            style={{ width: "24px", height: "24px" }}
+                          />
+                          Circuit Switching
+                        </h3>
 
-                            <div style={{ background: 'white', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>Formula:</p>
-                              <p style={{ fontFamily: 'monospace', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', color: '#15803d', margin: 0, wordBreak: 'break-all' }}>
-                                {version === 1 
-                                  ? `T = NX + (L+NH)/R + Y`
-                                  : `T = (X+P/R+Y) + 3N(X+P/R) + Y`
-                                }
-                              </p>
-                            </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "1rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#6b7280",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
+                              Formula:
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "clamp(1rem, 2vw, 1.125rem)",
+                                color: "#3730a3",
+                                margin: 0,
+                              }}
+                            >
+                              T = U + L/R + {version === 2 ? "2Y" : "Y"}
+                            </p>
+                          </div>
 
-                            <div style={{ background: '#15803d', borderRadius: '8px', padding: '1rem' }}>
-                              <p style={{ fontSize: '0.875rem', color: '#bbf7d0', marginBottom: '0.25rem' }}>Total Time:</p>
-                              <p style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 'bold', color: 'white', margin: 0 }}>
-                                {version === 1 ? packetTime.toFixed(4) : packetTimeV2.toFixed(4)} sec
-                              </p>
-                            </div>
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#6b7280",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
+                              Calculation:
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                                color: "#374151",
+                                margin: 0,
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              T = {params.U} + {params.L}/{params.R} +{" "}
+                              {version === 2 ? `2×${params.Y}` : params.Y}
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                                color: "#374151",
+                                margin: 0,
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              T = {params.U} +{" "}
+                              {(params.L / params.R).toFixed(4)} +{" "}
+                              {version === 2 ? 2 * params.Y : params.Y}
+                            </p>
+                          </div>
+
+                          <div
+                            style={{
+                              background: "#3730a3",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#c7d2fe",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              Total Time:
+                            </p>
+                            <p
+                              style={{
+                                fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                                fontWeight: "bold",
+                                color: "white",
+                                margin: 0,
+                              }}
+                            >
+                              {version === 1
+                                ? circuitTime.toFixed(4)
+                                : circuitTimeV2.toFixed(4)}{" "}
+                              sec
+                            </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Winner Display */}
-                      <div style={{
-                        marginTop: '1.5rem',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        border: '2px solid',
-                        borderColor: (version === 1 ? circuitTime < packetTime : circuitTimeV2 < packetTimeV2) ? '#c7d2fe' : '#bbf7d0',
-                        background: (version === 1 ? circuitTime < packetTime : circuitTimeV2 < packetTimeV2) ? '#eef2ff' : '#f0fdf4'
-                      }}>
-                        <h3 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.5rem)', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                          {(version === 1 ? circuitTime < packetTime : circuitTimeV2 < packetTimeV2)
-                            ? '🏆 Circuit Switching is Faster!'
-                            : '🏆 Packet Switching is Faster!'
-                          }
+                      {/* Packet Switching Result */}
+                      <div
+                        style={{
+                          border: "2px solid #bbf7d0",
+                          borderRadius: "12px",
+                          padding: "1.5rem",
+                          background: "#f0fdf4",
+                        }}
+                      >
+                        <h3
+                          style={{
+                            fontSize: "1.5rem",
+                            fontWeight: "bold",
+                            color: "#15803d",
+                            marginBottom: "1rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <Icon
+                            icon="box"
+                            style={{ width: "24px", height: "24px" }}
+                          />
+                          Packet Switching
                         </h3>
-                        <p style={{ color: '#374151', margin: 0, fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>
-                          Time difference: {Math.abs(
-                            version === 1 
-                              ? circuitTime - packetTime 
-                              : circuitTimeV2 - packetTimeV2
-                          ).toFixed(4)} seconds
-                        </p>
-                      </div>
 
-                      {/* Insights */}
-                      <div style={{ background: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '12px', padding: '1.5rem', marginTop: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#92400e', marginBottom: '0.75rem' }}>
-                          💡 Insights
-                        </h3>
-                        <ul style={{ color: '#374151', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}>
-                          <li>
-                            Circuit switching has a <strong>fixed overhead</strong> (setup time U)
-                          </li>
-                          <li>
-                            Packet switching overhead depends on <strong>number of packets</strong> (routing delay + header size)
-                          </li>
-                          <li>
-                            For short messages or low X values, <strong>packet switching</strong> tends to be faster
-                          </li>
-                          <li>
-                            For long messages with high setup costs, <strong>circuit switching</strong> may be more efficient
-                          </li>
-                        </ul>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "1rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#6b7280",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
+                              Number of packets:
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "clamp(1rem, 2vw, 1.125rem)",
+                                color: "#15803d",
+                                margin: 0,
+                              }}
+                            >
+                              N = ⌈{params.L}/({params.P}-{params.H})⌉ = {N}
+                            </p>
+                          </div>
+
+                          <div
+                            style={{
+                              background: "white",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#6b7280",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
+                              Formula:
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "clamp(0.75rem, 1.5vw, 0.875rem)",
+                                color: "#15803d",
+                                margin: 0,
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              {version === 1
+                                ? `T = NX + (L+NH)/R + Y`
+                                : `T = (X+P/R+Y) + 3N(X+P/R) + Y`}
+                            </p>
+                          </div>
+
+                          <div
+                            style={{
+                              background: "#15803d",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "0.875rem",
+                                color: "#bbf7d0",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              Total Time:
+                            </p>
+                            <p
+                              style={{
+                                fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                                fontWeight: "bold",
+                                color: "white",
+                                margin: 0,
+                              }}
+                            >
+                              {version === 1
+                                ? packetTime.toFixed(4)
+                                : packetTimeV2.toFixed(4)}{" "}
+                              sec
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Footer */}
-              <div style={{ marginTop: '2rem', padding: '1rem', textAlign: 'center', color: '#6b7280', fontSize: '0.875rem' }}>
-                <p>Network Switching Tutorial • CSC8021 Networks Coursework</p>
+                    {/* Winner Display */}
+                    <div
+                      style={{
+                        marginTop: "1.5rem",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                        border: "2px solid",
+                        borderColor: (
+                          version === 1
+                            ? circuitTime < packetTime
+                            : circuitTimeV2 < packetTimeV2
+                        )
+                          ? "#c7d2fe"
+                          : "#bbf7d0",
+                        background: (
+                          version === 1
+                            ? circuitTime < packetTime
+                            : circuitTimeV2 < packetTimeV2
+                        )
+                          ? "#eef2ff"
+                          : "#f0fdf4",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: "clamp(1.25rem, 3vw, 1.5rem)",
+                          fontWeight: "bold",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        {(
+                          version === 1
+                            ? circuitTime < packetTime
+                            : circuitTimeV2 < packetTimeV2
+                        )
+                          ? "🏆 Circuit Switching is Faster!"
+                          : "🏆 Packet Switching is Faster!"}
+                      </h3>
+                      <p
+                        style={{
+                          color: "#374151",
+                          margin: 0,
+                          fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                        }}
+                      >
+                        Time difference:{" "}
+                        {Math.abs(
+                          version === 1
+                            ? circuitTime - packetTime
+                            : circuitTimeV2 - packetTimeV2,
+                        ).toFixed(4)}{" "}
+                        seconds
+                      </p>
+                    </div>
+
+                    {/* Insights */}
+                    <div
+                      style={{
+                        background: "#fef3c7",
+                        border: "2px solid #fbbf24",
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                        marginTop: "1.5rem",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: "bold",
+                          color: "#92400e",
+                          marginBottom: "0.75rem",
+                        }}
+                      >
+                        💡 Insights
+                      </h3>
+                      <ul
+                        style={{
+                          color: "#374151",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.5rem",
+                          marginLeft: "1.5rem",
+                          fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                        }}
+                      >
+                        <li>
+                          Circuit switching has a{" "}
+                          <strong>fixed overhead</strong> (setup time U)
+                        </li>
+                        <li>
+                          Packet switching overhead depends on{" "}
+                          <strong>number of packets</strong> (routing delay +
+                          header size)
+                        </li>
+                        <li>
+                          For short messages or low X values,{" "}
+                          <strong>packet switching</strong> tends to be faster
+                        </li>
+                        <li>
+                          For long messages with high setup costs,{" "}
+                          <strong>circuit switching</strong> may be more
+                          efficient
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          );
-        };
 
-        // Render the app
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<NetworkSwitchingTutorial />);
+            {/* Footer */}
+            <div
+              style={{
+                marginTop: "2rem",
+                padding: "1rem",
+                textAlign: "center",
+                color: "#6b7280",
+                fontSize: "0.875rem",
+              }}
+            >
+              <p>
+                Network Switching Tutorial • CSC8021 Networks Coursework -
+                Newcastle University
+              </p>
+            </div>
+          </div>
+        );
+      };
+
+      // Render the app
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<NetworkSwitchingTutorial />);
     </script>
-</body>
+  </body>
 </html>
